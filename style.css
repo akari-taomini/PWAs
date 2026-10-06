@@ -1,22 +1,21 @@
 /*
- * v0.2：沉浸式 PWA 安全区适配
+ * v0.3：沉浸式 PWA「真下移」适配
  *
- * 目标：
- * 1. 背景/装饰仍然从屏幕 y=0 开始，继续画到 Android 状态栏后面；
- * 2. 酒馆顶部按钮与聊天主区域自动避开 safe-area-inset-top；
- * 3. 尽量通过 SillyTavern 自己的 --topBarBlockSize 传播偏移，减少对各种美化的硬覆盖。
+ * 修复 v0.2：不再扩大 top-settings-holder / --topBarBlockSize。
+ * 扩大盒子会把很多美化自己的顶栏背景一起拉长，底部蕾丝因此被推走。
+ *
+ * 现在改为：
+ * - 背景层留在 y=0，继续穿透 Android 状态栏；
+ * - 顶栏作为“完整成品”整体下移，原本的蕾丝/丝带/贴图尺寸不变；
+ * - 聊天主区域整体下移，并只从底部扣掉同样高度，避免溢出屏幕。
  */
 
 :root {
-    --st-immersive-safe-top: env(safe-area-inset-top, 0px);
-    --st-immersive-safe-bottom: env(safe-area-inset-bottom, 0px);
-
-    /* 状态栏下面额外留一点呼吸距离。想更贴近可改成 0px。 */
-    --st-immersive-extra-top: 4px;
-
-    /* JS 会在 standalone PWA 中写入真实值。 */
     --st-immersive-safe-top-px: 0px;
+    --st-immersive-extra-top: 4px;
     --st-immersive-ui-offset: calc(var(--st-immersive-safe-top-px) + var(--st-immersive-extra-top));
+    --st-immersive-sheld-base-height: 100dvh;
+    --st-immersive-sheld-base-max-height: 100dvh;
 }
 
 @media (display-mode: standalone) {
@@ -25,31 +24,30 @@
         min-height: 100dvh;
     }
 
-    /* 背景永远不要跟着 UI 下移。 */
+    /* 背景本身永远顶到屏幕最上面，不跟 UI 一起移动。 */
     #bg1,
     #bg_custom {
         top: 0 !important;
+        bottom: auto !important;
         min-height: 100dvh !important;
         height: 100dvh !important;
     }
 
     /*
-     * topBarBlockSize 已由 JS 扩大了 safe-area 高度。
-     * padding-top 把真正可点击的顶栏内容送到系统状态栏下方，
-     * 同时保留顶栏自己的背景/装饰继续铺到最上方。
+     * 重点：移动整个顶栏，而不是给顶栏加 padding / height。
+     * 因此美化原有的蕾丝、丝带、背景定位完全不变。
      */
-    html.st-immersive-pwa-standalone #top-settings-holder {
-        box-sizing: border-box !important;
-        padding-top: var(--st-immersive-ui-offset) !important;
+    html.st-immersive-pwa-standalone #top-bar {
+        translate: 0 var(--st-immersive-ui-offset) !important;
     }
 
     /*
-     * 少数美化会把 #sheld 的 top/height 写死，从而完全忽略
-     * --topBarBlockSize。JS 检测到这种情况后才启用这个兜底，
-     * 不会和正常美化重复下移。
+     * 主酒馆区域同步下移；高度从底部扣回同样距离。
+     * JS 会先读取当前美化真正的 #sheld 高度，再写入 base-height。
      */
-    html.st-immersive-pwa-standalone.st-immersive-force-sheld #sheld {
+    html.st-immersive-pwa-standalone #sheld {
         translate: 0 var(--st-immersive-ui-offset) !important;
-        max-height: calc(100dvh - var(--st-immersive-ui-offset)) !important;
+        height: calc(var(--st-immersive-sheld-base-height) - var(--st-immersive-ui-offset)) !important;
+        max-height: calc(var(--st-immersive-sheld-base-max-height) - var(--st-immersive-ui-offset)) !important;
     }
 }
