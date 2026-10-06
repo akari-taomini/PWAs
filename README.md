@@ -1,23 +1,36 @@
-# SillyTavern Immersive PWA v0.3.0
+# SillyTavern Immersive PWA
 
-Android Chrome / WebAPK 沉浸式状态栏扩展。
+Android Chrome / WebAPK 的沉浸式状态栏验证扩展。
 
-## v0.3 修复
+## 目标
 
-v0.2 通过扩大 `--topBarBlockSize` 和给 `#top-settings-holder` 增加顶部空间来避让状态栏。对带蕾丝、丝带、贴图的主题，这会把顶栏盒子本身拉高，导致底部装饰被推远，看起来像“蕾丝被吞掉、顶部只被拉长”。
+- 给 SillyTavern 页面注入 `viewport-fit=cover`
+- 提供可安装 PWA manifest（`display: standalone`）
+- 在支持 `Web App Short Edges Cutout Mode` 的 Chromium Android 上，让网页内容绘制到系统状态栏后方
+- v0.1 不主动改动顶栏布局，只验证“是否真的穿透”
 
-v0.3 改成：
+## 使用前
 
-- 不再修改 `--topBarBlockSize`。
-- 不再给 `#top-settings-holder` 增加 `padding-top`。
-- `#top-bar` 作为完整成品整体向下移动，主题原本的高度、蕾丝、丝带和背景定位不变。
-- `#sheld` 同步下移，并从底部扣除相同高度，避免超出屏幕。
-- `#bg1 / #bg_custom` 保持从屏幕 y=0 开始，状态栏区域露出的应该是酒馆背景，而不是被拉长的顶栏底纹。
+在 Android Chrome 的 `chrome://flags` 中启用：
 
-默认额外间距仍为 4px，可用：
+`Web App Short Edges Cutout Mode`
 
-```css
-:root { --st-immersive-extra-top: 0px; }
+若有 `Enabled (Standalone also enabled)`，选择它并重启 Chrome。
+
+## 安装
+
+将本仓库作为 SillyTavern 第三方扩展安装，刷新页面，然后在 Chrome 菜单中选择“安装应用 / 添加到主屏幕”。
+
+从桌面图标打开后测试。
+
+## 判断是否生效
+
+在安装后的 PWA 中，浏览器 DevTools / 控制台执行：
+
+```js
+getComputedStyle(document.documentElement).getPropertyValue('--st-immersive-safe-top')
 ```
 
-改成贴紧状态栏。
+或者直接观察状态栏区域是否显示网页背景。
+
+如果完全穿透但顶栏按钮跑到时间/电量下面，说明核心功能已成功，下一版只需要做 safe-area 布局适配。
