@@ -1,22 +1,53 @@
-/*
- * v0.1 验证版：故意不改 SillyTavern 的顶栏布局。
- * 先确认 Android Chrome / WebAPK 是否真的把页面画到状态栏下面。
- * 成功后再根据 safe-area-inset-top 精准下移按钮，而不下移背景。
+/* v0.5.0: real background at y=0, two independent header layers below safe-area.
+ * No body padding, no enlarged --topBarBlockSize, no transform, no screenshot strip.
+ * Layout overrides are generated only after measuring the current theme.
  */
-
 :root {
-    --st-immersive-safe-top: env(safe-area-inset-top, 0px);
-    --st-immersive-safe-bottom: env(safe-area-inset-bottom, 0px);
+    --st-immersive-extra-top: 0px;
 }
 
-@media (display-mode: standalone) {
-    html,
-    body {
-        min-height: 100dvh;
-    }
-
-    #bg1,
-    #bg_custom {
-        min-height: 100dvh;
-    }
+/* #bg1 owns the current background in ST 1.19. #bg_custom is for older ST builds.
+ * Raise the genuine background above the body's solid tint, below the UI (z>=30).
+ * Keep image, fitting, repeat, position and transitions under SillyTavern's control.
+ */
+html.st-immersive-pwa-standalone #bg1,
+html.st-immersive-pwa-standalone #bg_custom {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    bottom: auto !important;
+    width: 100% !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    margin: 0 !important;
+    pointer-events: none !important;
+    z-index: 0 !important;
 }
+html.st-immersive-pwa-standalone #bg_custom {
+    z-index: 1 !important;
+}
+
+/* Preserve the theme's focus-to-open QR behavior while the keyboard changes
+ * the available chat height. The input area must not flex-shrink to zero.
+ * No QR execution, configuration changes, or forced display of disabled sets.
+ */
+html.st-immersive-pwa-standalone.st-immersive-pwa-focus-qr #chat {
+    min-height: 0 !important;
+}
+html.st-immersive-pwa-standalone.st-immersive-pwa-focus-qr #form_sheld {
+    flex-shrink: 0 !important;
+}
+html.st-immersive-pwa-standalone.st-immersive-pwa-focus-qr.st-immersive-pwa-qr-open #qr--bar {
+    max-height: min(200px, 30dvh) !important;
+    height: auto !important;
+    opacity: 1 !important;
+    flex-shrink: 0 !important;
+    overflow-y: auto !important;
+}
+#st-immersive-pwa-settings { padding: 8px; }
+#st-immersive-pwa-settings summary { cursor: pointer; font-weight: bold; }
+#st-immersive-pwa-settings label { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 8px 0; }
+#st-immersive-pwa-settings label[hidden] { display: none; }
+#st-immersive-pwa-settings select { max-width: 100%; }
+#st-immersive-pwa-settings input[type="number"] { width: 80px; }
+#st-immersive-pwa-settings output { display: block; margin-top: 8px; white-space: normal; }
