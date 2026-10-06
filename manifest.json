@@ -1,0 +1,11 @@
+{
+  "display_name": "沉浸式 PWA 顶栏",
+  "loading_order": 1,
+  "requires": [],
+  "optional": [],
+  "js": "index.js",
+  "css": "style.css",
+  "author": "桃mini",
+  "version": "0.1.0",
+  "homePage": ""
+}

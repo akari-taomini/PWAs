@@ -1,0 +1,22 @@
+/*
+ * v0.1 验证版：故意不改 SillyTavern 的顶栏布局。
+ * 先确认 Android Chrome / WebAPK 是否真的把页面画到状态栏下面。
+ * 成功后再根据 safe-area-inset-top 精准下移按钮，而不下移背景。
+ */
+
+:root {
+    --st-immersive-safe-top: env(safe-area-inset-top, 0px);
+    --st-immersive-safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (display-mode: standalone) {
+    html,
+    body {
+        min-height: 100dvh;
+    }
+
+    #bg1,
+    #bg_custom {
+        min-height: 100dvh;
+    }
+}
