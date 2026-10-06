@@ -1,12 +1,22 @@
 /*
- * v0.1 验证版：故意不改 SillyTavern 的顶栏布局。
- * 先确认 Android Chrome / WebAPK 是否真的把页面画到状态栏下面。
- * 成功后再根据 safe-area-inset-top 精准下移按钮，而不下移背景。
+ * v0.2：沉浸式 PWA 安全区适配
+ *
+ * 目标：
+ * 1. 背景/装饰仍然从屏幕 y=0 开始，继续画到 Android 状态栏后面；
+ * 2. 酒馆顶部按钮与聊天主区域自动避开 safe-area-inset-top；
+ * 3. 尽量通过 SillyTavern 自己的 --topBarBlockSize 传播偏移，减少对各种美化的硬覆盖。
  */
 
 :root {
     --st-immersive-safe-top: env(safe-area-inset-top, 0px);
     --st-immersive-safe-bottom: env(safe-area-inset-bottom, 0px);
+
+    /* 状态栏下面额外留一点呼吸距离。想更贴近可改成 0px。 */
+    --st-immersive-extra-top: 4px;
+
+    /* JS 会在 standalone PWA 中写入真实值。 */
+    --st-immersive-safe-top-px: 0px;
+    --st-immersive-ui-offset: calc(var(--st-immersive-safe-top-px) + var(--st-immersive-extra-top));
 }
 
 @media (display-mode: standalone) {
@@ -15,8 +25,31 @@
         min-height: 100dvh;
     }
 
+    /* 背景永远不要跟着 UI 下移。 */
     #bg1,
     #bg_custom {
-        min-height: 100dvh;
+        top: 0 !important;
+        min-height: 100dvh !important;
+        height: 100dvh !important;
+    }
+
+    /*
+     * topBarBlockSize 已由 JS 扩大了 safe-area 高度。
+     * padding-top 把真正可点击的顶栏内容送到系统状态栏下方，
+     * 同时保留顶栏自己的背景/装饰继续铺到最上方。
+     */
+    html.st-immersive-pwa-standalone #top-settings-holder {
+        box-sizing: border-box !important;
+        padding-top: var(--st-immersive-ui-offset) !important;
+    }
+
+    /*
+     * 少数美化会把 #sheld 的 top/height 写死，从而完全忽略
+     * --topBarBlockSize。JS 检测到这种情况后才启用这个兜底，
+     * 不会和正常美化重复下移。
+     */
+    html.st-immersive-pwa-standalone.st-immersive-force-sheld #sheld {
+        translate: 0 var(--st-immersive-ui-offset) !important;
+        max-height: calc(100dvh - var(--st-immersive-ui-offset)) !important;
     }
 }
