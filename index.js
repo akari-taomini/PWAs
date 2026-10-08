@@ -1,6 +1,6 @@
 (() => {
     'use strict';
-    const VERSION = '0.5.0';
+    const VERSION = '0.5.1';
     const RUNTIME_ID = 'st-immersive-pwa-runtime';
     const PROBE_ID = 'st-immersive-pwa-safe-probe';
     const ACTIVE = 'st-immersive-pwa-standalone';
@@ -167,6 +167,7 @@
             top: Number.isFinite(parseFloat(cs.top)) ? parseFloat(cs.top)
                 : cs.position === 'relative' ? 0 : el.offsetTop,
             height: parseFloat(cs.height), maxHeight: parseFloat(cs.maxHeight),
+            minHeight: /^\s*(?:\d+(?:\.\d*)?|\.\d+)px\s*$/.test(cs.minHeight) ? parseFloat(cs.minHeight) : NaN,
             marginTop: parseFloat(cs.marginTop) || 0,
         };
     }
@@ -218,7 +219,14 @@
                 if (sheld && !document.body.classList.contains('waifuMode')) {
                     const s = snapshot(sheld);
                     const declarations = [`top: ${s.top + delta}px !important`];
-                    if (Number.isFinite(s.height)) declarations.push(`height: ${Math.max(0, s.height - delta)}px !important`);
+                    if (Number.isFinite(s.height)) {
+                        declarations.push(`height: ${Math.max(0, s.height - delta)}px !important`);
+                        // Adjust only a measured pixel minimum that blocks the same
+                        // height reduction. Preserve every non-blocking theme minimum.
+                        if (Number.isFinite(s.minHeight) && s.minHeight > Math.max(0, s.height - delta)) {
+                            declarations.push(`min-height: ${Math.max(0, s.minHeight - delta)}px !important`);
+                        }
+                    }
                     if (Number.isFinite(s.maxHeight)) declarations.push(`max-height: ${Math.max(0, s.maxHeight - delta)}px !important`);
                     rules.push(`${selector(sheld)} { ${declarations.join(';')}; }`);
                 }
